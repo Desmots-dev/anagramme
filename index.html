@@ -1,0 +1,827 @@
+git commit <!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atelier d'anagrammes</title>
+<style>
+  :root {
+    --paper: #EDE6D6;
+    --paper-dark: #E2D8C3;
+    --tray-wood: #6B4A34;
+    --tray-wood-dark: #56392A;
+    --ink: #211E1B;
+    --ink-soft: #4A443D;
+    --brass: #C9A227;
+    --brass-light: #E0C466;
+    --red: #A63A2E;
+    --moss: #4B5D45;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(0,0,0,0.02) 0%, transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(0,0,0,0.02) 0%, transparent 40%);
+    color: var(--ink);
+    font-family: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+    min-height: 100vh;
+    padding: 32px 16px 60px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+  }
+
+  .bg-motif {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .bg-motif svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 640px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--tray-wood);
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::before, .eyebrow::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--tray-wood);
+    opacity: 0.35;
+  }
+
+  h1 {
+    font-size: 30px;
+    line-height: 1.25;
+    margin: 0 0 10px;
+    font-weight: 400;
+    text-align: center;
+  }
+
+  .intro {
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 480px;
+    margin: 0 auto 34px;
+  }
+
+  .intro em { color: var(--red); font-style: italic; }
+
+  .card {
+    background: var(--paper-dark);
+    border: 1px solid rgba(33,30,27,0.12);
+    border-radius: 3px;
+    padding: 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.4) inset, 0 6px 16px rgba(33,30,27,0.06);
+  }
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  label.field-label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 160px;
+    font-family: Georgia, serif;
+    font-size: 17px;
+    padding: 11px 14px;
+    border: 1px solid rgba(33,30,27,0.25);
+    border-radius: 2px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  input[type="text"]:focus {
+    outline: 2px solid var(--brass);
+    outline-offset: 1px;
+  }
+
+  button {
+    font-family: Georgia, serif;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+    padding: 11px 18px;
+    border-radius: 2px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  button:active { transform: translateY(1px); }
+
+  button:focus-visible {
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+
+  .btn-primary {
+    background: var(--red);
+    color: var(--paper);
+    font-weight: 700;
+  }
+  .btn-primary:hover { box-shadow: 0 3px 10px rgba(166,58,46,0.35); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border-color: rgba(33,30,27,0.3);
+  }
+  .btn-ghost:hover { background: rgba(33,30,27,0.05); }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--tray-wood);
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+
+  /* --- The type case (tray) --- */
+  .case {
+    background: var(--tray-wood);
+    background-image: linear-gradient(180deg, var(--tray-wood), var(--tray-wood-dark));
+    border-radius: 4px;
+    padding: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 78px;
+    align-content: flex-start;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.35), inset 0 -1px 0 rgba(255,255,255,0.06);
+  }
+
+  .case:empty::after,
+  .case.is-empty::after {
+    content: "La casse est vide — tapez un prénom ci-dessus.";
+    color: rgba(237,230,214,0.55);
+    font-size: 13px;
+    font-style: italic;
+    padding: 8px;
+  }
+
+  .tile {
+    position: relative;
+    width: 44px;
+    height: 50px;
+    background: var(--paper);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow:
+      0 2px 0 rgba(0,0,0,0.25),
+      0 3px 5px rgba(0,0,0,0.25),
+      inset 0 0 0 1px rgba(0,0,0,0.06);
+    user-select: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .tile:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 5px 0 rgba(0,0,0,0.25),
+      0 7px 10px rgba(0,0,0,0.3),
+      inset 0 0 0 1px rgba(0,0,0,0.06);
+  }
+
+  .tile .idx {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-family: Georgia, serif;
+    font-weight: 400;
+    font-size: 8px;
+    color: var(--brass);
+    opacity: 0.9;
+  }
+
+  .tile.placed {
+    background: #F7F1E3;
+    box-shadow:
+      0 2px 0 rgba(75,93,69,0.3),
+      0 3px 5px rgba(0,0,0,0.18),
+      inset 0 0 0 1px rgba(75,93,69,0.3);
+  }
+
+  .tile.placed .idx { color: var(--moss); }
+
+  .tile.space-tile {
+    background: transparent;
+    border: 1.5px dashed rgba(237,230,214,0.45);
+    color: rgba(237,230,214,0.55);
+    box-shadow: none;
+    font-size: 11px;
+  }
+  .tile.space-tile:hover { transform: none; box-shadow: none; border-color: rgba(237,230,214,0.75); }
+
+  .case-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* --- Arrangement (composition) --- */
+  .composition {
+    background: var(--paper);
+    border: 1.5px solid rgba(33,30,27,0.15);
+    border-radius: 4px;
+    padding: 16px;
+    min-height: 78px;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 8px;
+  }
+
+  .composition.is-empty::after {
+    content: "Votre anagramme apparaîtra ici — cliquez des lettres ci-dessus.";
+    color: rgba(74,68,61,0.5);
+    font-size: 13px;
+    font-style: italic;
+    padding: 8px;
+  }
+
+  .counter {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    text-align: right;
+  }
+
+  .counter strong { color: var(--red); }
+
+  .export-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(33,30,27,0.12);
+  }
+
+  .btn-accent {
+    background: var(--moss);
+    color: var(--paper);
+    font-weight: 700;
+  }
+  .btn-accent:hover { box-shadow: 0 3px 10px rgba(75,93,69,0.35); }
+
+  .essais {
+    margin-top: 14px;
+  }
+
+  .essais-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .essais-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .essai-chip {
+    font-family: ui-monospace, 'SF Mono', 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    background: var(--paper);
+    border: 1px solid rgba(33,30,27,0.18);
+    border-radius: 20px;
+    padding: 5px 12px;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .essai-chip:hover { border-color: var(--brass); color: var(--ink); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  footer.note {
+    text-align: center;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    max-width: 460px;
+    margin: 30px auto 0;
+  }
+
+  @media (max-width: 420px) {
+    .tile { width: 38px; height: 44px; font-size: 16px; }
+    h1 { font-size: 25px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile, button { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-motif" aria-hidden="true">
+  <svg id="motif-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <marker id="motif-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--tray-wood)"></path>
+      </marker>
+    </defs>
+    <g id="motif-lines" stroke="var(--tray-wood)" stroke-width="0.7" fill="none" opacity="0.16"></g>
+  </svg>
+</div>
+<div class="page">
+
+  <div class="eyebrow">Atelier d'anagrammes</div>
+  <h1>Composez votre prénom<br>en lettres mobiles</h1>
+  <p class="intro">
+    Comme dans le recueil, chaque lettre garde la trace de sa place d'origine —
+    le petit chiffre sous la lettre indique sa position dans votre prénom.
+    <em>Déplacez-les, il n'y a pas de bonne réponse.</em>
+  </p>
+
+  <div class="card">
+    <label class="field-label" for="name-input">Votre prénom</label>
+    <div class="form-row">
+      <input type="text" id="name-input" placeholder="ex. Camille" maxlength="24" autocomplete="off">
+      <button class="btn-primary" id="compose-btn">Composer</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-label">Votre casse</p>
+    <div class="case is-empty" id="tray"></div>
+    <div class="case-controls">
+      <span class="hint">Cliquez une lettre pour la poser</span>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-ghost" id="shuffle-btn">Mélanger</button>
+        <button class="btn-ghost" id="reset-btn">Recommencer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-label">Votre anagramme</p>
+    <div class="composition is-empty" id="composition"></div>
+    <div class="counter" id="counter"></div>
+
+    <div class="export-row">
+      <button class="btn-ghost" id="save-btn">Garder cet essai</button>
+      <button class="btn-ghost" id="copy-btn">Copier le texte</button>
+      <button class="btn-accent" id="download-btn">Télécharger l'image</button>
+    </div>
+
+    <div class="essais" id="essais-wrap" style="display:none;">
+      <p class="essais-label">Vos essais gardés</p>
+      <div class="essais-list" id="essais-list"></div>
+    </div>
+  </div>
+
+  <div class="card qr-card">
+    <p class="section-label">Générer le QR code (pour vous — pas pour le lecteur)</p>
+    <p class="hint" style="margin-bottom:12px;">Collez ici l'adresse définitive une fois la page mise en ligne (ex. GitHub Pages).</p>
+    <div class="form-row">
+      <input type="text" id="qr-url" placeholder="https://votre-nom.github.io/atelier-recueil/" autocomplete="off">
+      <button class="btn-primary" id="qr-generate-btn">Générer</button>
+    </div>
+    <div id="qr-output" style="display:none; margin-top:16px; align-items:center; gap:16px; flex-wrap:wrap;">
+      <div id="qr-canvas-wrap" style="background:#fff; padding:10px; border-radius:3px; display:inline-block;"></div>
+      <button class="btn-accent" id="qr-download-btn">Télécharger le QR (PNG)</button>
+    </div>
+  </div>
+
+  <footer class="note">
+    Dire qu'ils soient les fruits purement du hasard ?<br>
+    Non — il n'est possible que mots aient tant d'élan !
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+(function () {
+  // --- Background starburst motif, echoing the book cover pattern ---
+  function drawMotif() {
+    const g = document.getElementById('motif-lines');
+    if (!g) return;
+    const W = 1000, H = 1000;
+    const cx = W / 2;
+    const hubYs = [cx - 70, cx - 35, cx, cx + 35, cx + 70]; // stacked hub cluster, like the cover
+    const raysPerSide = 9;
+    let svgContent = '';
+
+    function jitter(spread) { return (Math.random() - 0.5) * spread; }
+
+    hubYs.forEach(hy => {
+      const hx = cx + jitter(6);
+
+      // left + right rays (near-horizontal)
+      for (let i = 0; i < raysPerSide; i++) {
+        const t = i / (raysPerSide - 1);
+        const endY = 60 + t * (H - 120) + jitter(10);
+        svgContent += `<line x1="${hx}" y1="${hy}" x2="0" y2="${endY}" marker-end="url(#motif-arrow)"/>`;
+        svgContent += `<line x1="${hx}" y1="${hy}" x2="${W}" y2="${endY}" marker-end="url(#motif-arrow)"/>`;
+      }
+
+      // up + down rays (near-vertical)
+      for (let i = 0; i < raysPerSide; i++) {
+        const t = i / (raysPerSide - 1);
+        const endX = 60 + t * (W - 120) + jitter(10);
+        svgContent += `<line x1="${hx}" y1="${hy}" x2="${endX}" y2="0" marker-end="url(#motif-arrow)"/>`;
+        svgContent += `<line x1="${hx}" y1="${hy}" x2="${endX}" y2="${H}" marker-end="url(#motif-arrow)"/>`;
+      }
+    });
+
+    g.innerHTML = svgContent;
+  }
+  drawMotif();
+
+  const input = document.getElementById('name-input');
+  const composeBtn = document.getElementById('compose-btn');
+  const shuffleBtn = document.getElementById('shuffle-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const tray = document.getElementById('tray');
+  const composition = document.getElementById('composition');
+  const counter = document.getElementById('counter');
+
+  let letters = [];   // {id, char, idx}
+  let trayOrder = [];      // array of ids currently in tray
+  let compOrder = [];      // array of ids / '__space__' currently placed
+
+  function normalize(name) {
+    return name.trim().replace(/[^\p{L}]/gu, '');
+  }
+
+  function buildLetters(name) {
+    const chars = Array.from(name.toUpperCase());
+    return chars.map((c, i) => ({ id: 'L' + i, char: c, idx: i + 1 }));
+  }
+
+  function render() {
+    // Tray
+    tray.innerHTML = '';
+    tray.classList.toggle('is-empty', trayOrder.length === 0 && letters.length > 0 ? false : letters.length === 0);
+    if (letters.length === 0) {
+      tray.classList.add('is-empty');
+    } else {
+      tray.classList.remove('is-empty');
+      trayOrder.forEach(id => {
+        const letter = letters.find(l => l.id === id);
+        const el = document.createElement('div');
+        el.className = 'tile';
+        el.innerHTML = letter.char + '<span class="idx">' + letter.idx + '</span>';
+        el.title = 'Poser cette lettre';
+        el.addEventListener('click', () => placeLetter(id));
+        tray.appendChild(el);
+      });
+    }
+
+    // Composition
+    composition.innerHTML = '';
+    composition.classList.toggle('is-empty', compOrder.length === 0);
+    compOrder.forEach((id, pos) => {
+      if (id === '__space__') {
+        const el = document.createElement('div');
+        el.className = 'tile space-tile';
+        el.textContent = '␣';
+        el.title = 'Retirer cet espace';
+        el.addEventListener('click', () => removeFromComposition(pos));
+        composition.appendChild(el);
+      } else {
+        const letter = letters.find(l => l.id === id);
+        const el = document.createElement('div');
+        el.className = 'tile placed';
+        el.innerHTML = letter.char + '<span class="idx">' + letter.idx + '</span>';
+        el.title = 'Reposer dans la casse';
+        el.addEventListener('click', () => removeFromComposition(pos));
+        composition.appendChild(el);
+      }
+    });
+
+    const placedLetterCount = compOrder.filter(id => id !== '__space__').length;
+    if (letters.length > 0) {
+      counter.innerHTML = '<strong>' + placedLetterCount + '</strong> / ' + letters.length + ' lettres placées';
+    } else {
+      counter.textContent = '';
+    }
+  }
+
+  function placeLetter(id) {
+    trayOrder = trayOrder.filter(x => x !== id);
+    compOrder.push(id);
+    render();
+  }
+
+  function removeFromComposition(pos) {
+    const [id] = compOrder.splice(pos, 1);
+    if (id !== '__space__') {
+      trayOrder.push(id);
+    }
+    render();
+  }
+
+  function addSpace() {
+    if (letters.length === 0) return;
+    compOrder.push('__space__');
+    render();
+  }
+
+  function shuffleTray() {
+    for (let i = trayOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [trayOrder[i], trayOrder[j]] = [trayOrder[j], trayOrder[i]];
+    }
+    render();
+  }
+
+  function composeName() {
+    const clean = normalize(input.value);
+    if (!clean) return;
+    letters = buildLetters(clean);
+    trayOrder = letters.map(l => l.id);
+    compOrder = [];
+    render();
+  }
+
+  function resetAll() {
+    trayOrder = letters.map(l => l.id);
+    compOrder = [];
+    render();
+  }
+
+  composeBtn.addEventListener('click', composeName);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') composeName();
+  });
+  shuffleBtn.addEventListener('click', shuffleTray);
+  resetBtn.addEventListener('click', resetAll);
+
+  // --- Export, copy, and saved-attempts ---
+  const saveBtn = document.getElementById('save-btn');
+  const copyBtn = document.getElementById('copy-btn');
+  const downloadBtn = document.getElementById('download-btn');
+  const essaisWrap = document.getElementById('essais-wrap');
+  const essaisList = document.getElementById('essais-list');
+  const toast = document.getElementById('toast');
+
+  let savedAttempts = [];
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+  }
+
+  function getCompositionText() {
+    return compOrder.map(id => id === '__space__' ? ' ' : letters.find(l => l.id === id).char).join('');
+  }
+
+  function saveAttempt() {
+    const text = getCompositionText();
+    if (!text.trim()) { showToast('Composez d\'abord un anagramme.'); return; }
+    savedAttempts.push(text);
+    renderEssais();
+    showToast('Essai gardé.');
+  }
+
+  function renderEssais() {
+    essaisWrap.style.display = savedAttempts.length ? 'block' : 'none';
+    essaisList.innerHTML = '';
+    savedAttempts.forEach(text => {
+      const chip = document.createElement('span');
+      chip.className = 'essai-chip';
+      chip.textContent = text;
+      chip.title = 'Copier cet essai';
+      chip.addEventListener('click', () => copyText(text));
+      essaisList.appendChild(chip);
+    });
+  }
+
+  function copyText(customText) {
+    const text = customText || getCompositionText();
+    if (!text.trim()) { showToast('Composez d\'abord un anagramme.'); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        () => showToast('Copié : ' + text),
+        () => showToast('Impossible de copier automatiquement.')
+      );
+    } else {
+      showToast('Copié : ' + text);
+    }
+  }
+
+  function downloadImage() {
+    if (compOrder.length === 0) { showToast('Composez d\'abord un anagramme.'); return; }
+
+    const tileW = 54, tileH = 60, gap = 10, pad = 30;
+    const cols = compOrder.length;
+    const canvasW = cols * tileW + (cols - 1) * gap + pad * 2;
+    const canvasH = tileH + pad * 2;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = canvasW;
+    canvas.height = canvasH;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#EDE6D6';
+    ctx.fillRect(0, 0, canvasW, canvasH);
+
+    compOrder.forEach((id, i) => {
+      const x = pad + i * (tileW + gap);
+      const y = pad;
+      if (id === '__space__') {
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(33,30,27,0.35)';
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, x, y, tileW, tileH, 4);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        const letter = letters.find(l => l.id === id);
+        ctx.fillStyle = '#F7F1E3';
+        roundRect(ctx, x, y, tileW, tileH, 4);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(75,93,69,0.35)';
+        ctx.lineWidth = 1;
+        roundRect(ctx, x, y, tileW, tileH, 4);
+        ctx.stroke();
+
+        ctx.fillStyle = '#211E1B';
+        ctx.font = '700 24px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter.char, x + tileW / 2, y + tileH / 2 - 2);
+
+        ctx.fillStyle = '#4B5D45';
+        ctx.font = '10px Georgia, serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(String(letter.idx), x + tileW - 6, y + tileH - 8);
+      }
+    });
+
+    canvas.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const namePart = normalize(input.value) || 'anagramme';
+      a.href = url;
+      a.download = 'anagramme-' + namePart.toLowerCase() + '.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Image téléchargée.');
+    });
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  saveBtn.addEventListener('click', saveAttempt);
+  copyBtn.addEventListener('click', () => copyText());
+  downloadBtn.addEventListener('click', downloadImage);
+
+  // --- QR code generator (for the author, points to the hosted page) ---
+  const qrUrlInput = document.getElementById('qr-url');
+  const qrGenerateBtn = document.getElementById('qr-generate-btn');
+  const qrOutput = document.getElementById('qr-output');
+  const qrCanvasWrap = document.getElementById('qr-canvas-wrap');
+  const qrDownloadBtn = document.getElementById('qr-download-btn');
+
+  function generateQR() {
+    const url = qrUrlInput.value.trim();
+    if (!url) { showToast('Collez d\'abord une adresse.'); return; }
+    if (typeof QRCode === 'undefined') { showToast('Le générateur de QR n\'a pas pu se charger.'); return; }
+
+    qrCanvasWrap.innerHTML = '';
+    new QRCode(qrCanvasWrap, {
+      text: url,
+      width: 220,
+      height: 220,
+      colorDark: '#211E1B',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    qrOutput.style.display = 'flex';
+    showToast('QR code généré.');
+  }
+
+  function downloadQR() {
+    const canvas = qrCanvasWrap.querySelector('canvas');
+    const img = qrCanvasWrap.querySelector('img');
+    let dataUrl;
+    if (canvas) {
+      dataUrl = canvas.toDataURL('image/png');
+    } else if (img) {
+      dataUrl = img.src;
+    } else {
+      showToast('Générez d\'abord un QR code.');
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'qr-code-recueil.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  qrGenerateBtn.addEventListener('click', generateQR);
+  qrUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') generateQR(); });
+  qrDownloadBtn.addEventListener('click', downloadQR);
+
+  // small persistent "add space" affordance inside the tray controls area
+  const spaceHint = document.createElement('button');
+  spaceHint.className = 'btn-ghost';
+  spaceHint.textContent = '+ espace';
+  spaceHint.style.marginLeft = '8px';
+  spaceHint.addEventListener('click', addSpace);
+  document.querySelector('.case-controls > div').prepend(spaceHint);
+
+  render();
+})();
+</script>
+</body>
+</html>
