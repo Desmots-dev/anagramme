@@ -1,4 +1,4 @@
-git commit <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -449,19 +449,6 @@ git commit <!DOCTYPE html>
     </div>
   </div>
 
-  <div class="card qr-card">
-    <p class="section-label">Générer le QR code (pour vous — pas pour le lecteur)</p>
-    <p class="hint" style="margin-bottom:12px;">Collez ici l'adresse définitive une fois la page mise en ligne (ex. GitHub Pages).</p>
-    <div class="form-row">
-      <input type="text" id="qr-url" placeholder="https://votre-nom.github.io/atelier-recueil/" autocomplete="off">
-      <button class="btn-primary" id="qr-generate-btn">Générer</button>
-    </div>
-    <div id="qr-output" style="display:none; margin-top:16px; align-items:center; gap:16px; flex-wrap:wrap;">
-      <div id="qr-canvas-wrap" style="background:#fff; padding:10px; border-radius:3px; display:inline-block;"></div>
-      <button class="btn-accent" id="qr-download-btn">Télécharger le QR (PNG)</button>
-    </div>
-  </div>
-
   <footer class="note">
     Dire qu'ils soient les fruits purement du hasard ?<br>
     Non — il n'est possible que mots aient tant d'élan !
@@ -470,8 +457,6 @@ git commit <!DOCTYPE html>
 </div>
 
 <div class="toast" id="toast"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <script>
 (function () {
@@ -763,54 +748,6 @@ git commit <!DOCTYPE html>
   copyBtn.addEventListener('click', () => copyText());
   downloadBtn.addEventListener('click', downloadImage);
 
-  // --- QR code generator (for the author, points to the hosted page) ---
-  const qrUrlInput = document.getElementById('qr-url');
-  const qrGenerateBtn = document.getElementById('qr-generate-btn');
-  const qrOutput = document.getElementById('qr-output');
-  const qrCanvasWrap = document.getElementById('qr-canvas-wrap');
-  const qrDownloadBtn = document.getElementById('qr-download-btn');
-
-  function generateQR() {
-    const url = qrUrlInput.value.trim();
-    if (!url) { showToast('Collez d\'abord une adresse.'); return; }
-    if (typeof QRCode === 'undefined') { showToast('Le générateur de QR n\'a pas pu se charger.'); return; }
-
-    qrCanvasWrap.innerHTML = '';
-    new QRCode(qrCanvasWrap, {
-      text: url,
-      width: 220,
-      height: 220,
-      colorDark: '#211E1B',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-    qrOutput.style.display = 'flex';
-    showToast('QR code généré.');
-  }
-
-  function downloadQR() {
-    const canvas = qrCanvasWrap.querySelector('canvas');
-    const img = qrCanvasWrap.querySelector('img');
-    let dataUrl;
-    if (canvas) {
-      dataUrl = canvas.toDataURL('image/png');
-    } else if (img) {
-      dataUrl = img.src;
-    } else {
-      showToast('Générez d\'abord un QR code.');
-      return;
-    }
-    const a = document.createElement('a');
-    a.href = dataUrl;
-    a.download = 'qr-code-recueil.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }
-
-  qrGenerateBtn.addEventListener('click', generateQR);
-  qrUrlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') generateQR(); });
-  qrDownloadBtn.addEventListener('click', downloadQR);
 
   // small persistent "add space" affordance inside the tray controls area
   const spaceHint = document.createElement('button');
